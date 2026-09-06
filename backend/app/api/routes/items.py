@@ -6,6 +6,7 @@ from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
+from app.services.notifications import notify_item_created
 
 router = APIRouter(prefix="/items", tags=["items"])
 
@@ -69,6 +70,7 @@ def create_item(
     session.add(item)
     session.commit()
     session.refresh(item)
+    notify_item_created(session=session, owner_id=item.owner_id, item_title=item.title)
     return item
 
 
