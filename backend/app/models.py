@@ -112,6 +112,42 @@ class ItemsPublic(SQLModel):
     count: int
 
 
+# Shared properties for a notification
+class NotificationBase(SQLModel):
+    message: str = Field(min_length=1, max_length=500)
+    is_read: bool = False
+
+
+# Properties to receive on notification creation (internal, service-only)
+class NotificationCreate(NotificationBase):
+    user_id: uuid.UUID
+
+
+# Database model, database table inferred from class name
+class Notification(NotificationBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    user: User | None = Relationship()
+
+
+# Properties to return via API, id is always required
+class NotificationPublic(NotificationBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime | None = None
+
+
+class NotificationsPublic(SQLModel):
+    data: list[NotificationPublic]
+    count: int
+
+
 # Generic message
 class Message(SQLModel):
     message: str
